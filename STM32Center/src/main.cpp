@@ -21,8 +21,8 @@ int cycle_counter = 0;              // Tracks 20s control cycle
 int calculated_pump_on_sec = 0; 
 
 // Sensor Calibration
-const int SOIL_DRY_RAW = 480; // ADC at 0% moisture
-const int SOIL_WET_RAW = 150; // ADC at 100% moisture
+const int SOIL_DRY_RAW = 505; // ADC at 0% moisture
+const int SOIL_WET_RAW = 205; // ADC at 100% moisture
 
 // UART & Global States
 char rx_buffer[150];
@@ -35,6 +35,8 @@ int do_am = 0;
 int dien_ap_pin = 0;
 int soil_percent = 0;
 bool has_valid_data = false;
+unsigned long last_valid_packet_time = 0; // [NEW] Lưu thời điểm nhận gói tin cuối
+const unsigned long NODE_TIMEOUT_MS = 45000; // [NEW] Ngưỡng timeout 45 giây
 
 // DSP: Median + EMA Pipeline
 #define MEDIAN_WINDOW 5
@@ -202,6 +204,7 @@ void apply_packet(const char *packet) {
             nhiet_do = t; do_am = h; dien_ap_pin = p;
             soil_percent = calculate_soil_percent(process_dsp_soil(raw_s));
             has_valid_data = true;
+            last_valid_packet_time = millis();
         }
     }
 }
@@ -245,6 +248,16 @@ void uart_receive() {
     }
 }
 
+// [NEW] Hàm giám sát kết nối
+void check_node_timeout() {
+    // Chỉ kiểm tra khi đã từng có kết nối (has_valid_data == true)
+    if (has_valid_data && (millis() - last_valid_packet_time > NODE_TIMEOUT_MS)) {
+        has_valid_data = false; // Đánh dấu mất dữ liệu
+        pump_control(false);    // Tính năng an toàn: Ép tắt máy bơm ngay lập tức
+        is_manual_mode = false; // Reset luôn cả chế độ thủ công
+    }
+}
+
 // LCD Interface
 void lcd_print_fixed(uint8_t row, const char *text) {
     char line[17];
@@ -266,8 +279,12 @@ void update_lcd() {
     last_lcd_update_time = now;
 
     if (!has_valid_data) {
-        lcd_print_fixed(0, "Waiting Data...");
-        lcd_print_fixed(1, "Pump: OFF");
+        // [MODIFIED] Báo lỗi lên LCD
+        lcd_print_fixed(0, "ERR: LOST SENSOR");
+        lcd_print_fixed(1, "Pump: OFF (SAFE)");
+        
+        // [NEW] Bắn mã lỗi -1 lên Gateway để App điện thoại biết hệ thống đang lỗi
+        Serial1.print("-1|-1|-1|-1|0\n"); 
         return;
     }
 
@@ -317,6 +334,7 @@ void setup() {
 
 void loop() {
     uart_receive();
+    check_node_timeout();
     timer_driven_pump_control(); 
     update_lcd();
 }

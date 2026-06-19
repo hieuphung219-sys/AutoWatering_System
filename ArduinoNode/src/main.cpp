@@ -136,8 +136,8 @@ void setup() {
 }
 
 // Wake-up and Sleep thresholds based on Raw ADC
-#define WAKE_UP_THRESHOLD 282 // < 60% moisture
-#define SLEEP_THRESHOLD 232   // >= 70% moisture
+#define WAKE_UP_THRESHOLD 325 // < 60% moisture
+#define SLEEP_THRESHOLD 265   // >= 70% moisture
 
 void loop() {
     int temperature = 0, humidity = 0, soil = 0, battery = 0;

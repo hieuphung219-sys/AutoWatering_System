@@ -12,7 +12,7 @@ MIN_SEND_INTERVAL_SEC = 1.0
 TEST_PAYLOAD = b"30|32|663|99\n"
 
 # [NEW] Thông số Trạm trung chuyển MQTT (HiveMQ)
-MQTT_BROKER = "broker.hivemq.com"
+MQTT_BROKER = "broker.emqx.io"
 MQTT_PORT = 1883
 TOPIC_DATA = "hieuphung/autowatering/data"
 TOPIC_CMD = "hieuphung/autowatering/cmd"
