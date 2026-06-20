@@ -17,7 +17,7 @@ LiquidCrystal_I2C lcd(LCD_ADDR, 16, 2);
 HardwareTimer *MyTim = new HardwareTimer(TIM2);
 volatile bool tick_1s_flag = false; // Must be volatile for ISR access
 
-int cycle_counter = 0;              // Tracks 20s control cycle
+int cycle_counter = 0;              // Tracks 60s control cycle
 int calculated_pump_on_sec = 0; 
 
 // Sensor Calibration
