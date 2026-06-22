@@ -97,7 +97,7 @@ int calculate_soil_percent(int filtered_raw) {
 const int HOT_TEMP_THRESHOLD = 32;   
 const int DRY_HUM_THRESHOLD = 45;    
 const int BASE_TARGET_MOISTURE = 70; 
-const float BASE_Kp_SEC = 0.1;       // Proportional gain mapping % error to seconds
+const float BASE_Kp_SEC = 0.05;       // Proportional gain mapping % error to seconds
 
 unsigned long cycle_start_time = 0;
 unsigned long calculated_pump_on_time = 0;
@@ -160,20 +160,16 @@ void timer_driven_pump_control() {
             int pump_start_threshold = current_target_moisture - MOISTURE_START_OFFSET;
             pump_start_threshold = constrain(pump_start_threshold, 0, 100);
 
-            if (soil_percent <= pump_start_threshold) {
+            if (soil_percent <= pump_start_threshold || watering_request == true) {
                 watering_request = true;
                 int error = current_target_moisture - soil_percent;
                 
                 calculated_pump_on_sec = (int)(dynamic_Kp * error);
                 
-                // Safety upper bound: max 15s pump duration
-                if (calculated_pump_on_sec > 15) {
-                    calculated_pump_on_sec = 15;
+                if (calculated_pump_on_sec < 1) {
+                    calculated_pump_on_sec = 1; 
                 }
-            } else {
-                watering_request = false;
-                calculated_pump_on_sec = 0;
-            }
+            } 
         }
 
         // 2. Execute relay state within cycle bounds
