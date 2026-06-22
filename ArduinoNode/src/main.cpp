@@ -64,8 +64,8 @@ void read_sensors(int &temperature, int &humidity, int &soil, int &battery) {
     // Power up sensors
     digitalWrite(SENSOR_POWER_PIN, HIGH);
     
-    // Wait 250ms for DHT11 and voltage divider stabilization
-    LowPower.powerDown(SLEEP_250MS, ADC_OFF, BOD_OFF);
+    // Wait 1000ms for DHT11 and voltage divider stabilization
+    LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);
 
     // Read DHT11
     float hum_read = dht.readHumidity();
@@ -117,7 +117,6 @@ void send_to_hm10_and_sleep(int temp, int hum, int soil, int bat) {
     Serial.flush(); 
     
     // Deep sleep MCU
-    LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
     LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
 
     // Put HM-10 to sleep after broadcasting
