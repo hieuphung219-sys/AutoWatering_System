@@ -271,28 +271,35 @@ void lcd_print_fixed(uint8_t row, const char *text) {
 unsigned long last_lcd_update_time = 0;
 void update_lcd() {
     unsigned long now = millis();
+    // Giới hạn tốc độ làm mới LCD ở mức 2Hz (500ms) để tránh nháy màn hình
     if (now - last_lcd_update_time < 500) return;
     last_lcd_update_time = now;
 
     if (!has_valid_data) {
-        // [MODIFIED] Báo lỗi lên LCD
+        // Báo lỗi lên LCD khi mất kết nối Node
         lcd_print_fixed(0, "ERR: LOST SENSOR");
         lcd_print_fixed(1, "Pump: OFF (SAFE)");
         
-        // [NEW] Bắn mã lỗi -1 lên Gateway để App điện thoại biết hệ thống đang lỗi
         Serial1.print("-1|-1|-1|-1|0\n"); 
         return;
     }
 
     char line1[17];
     char line2[17];
-    snprintf(line1, sizeof(line1), "T:%d H:%d B:%d%%", nhiet_do, do_am, dien_ap_pin);
-    // Format: S:[Current]/[Adaptive Target] [Pump State]
-    snprintf(line2, sizeof(line2), "S:%d/%d %s", soil_percent, current_target_moisture, pump_on ? "ON" : "OFF");
+    
+    // DÒNG 1: Nhiệt độ và Độ ẩm không khí
+    // Format tối đa: "T:32\xDFC H:80%%" -> 14 ký tự
+    snprintf(line1, sizeof(line1), "T:%dC H:%d%%", nhiet_do, do_am);
+    
+    // DÒNG 2: Độ ẩm đất (Đã bỏ % ở số đầu tiên) và Phần trăm Pin
+    // Format tối đa: "S100/75%% B100%%" -> 14 ký tự
+    snprintf(line2, sizeof(line2), "S:%d/%d%% B:%d%%", soil_percent, current_target_moisture, dien_ap_pin);
 
+    // Xuất chuỗi ra LCD, hàm lcd_print_fixed tự động điền khoảng trắng vào phần dư
     lcd_print_fixed(0, line1);
     lcd_print_fixed(1, line2);
 
+    // Bắn chuỗi dữ liệu gốc qua UART để PC Gateway và App đọc
     Serial1.print(nhiet_do); Serial1.print("|");
     Serial1.print(do_am); Serial1.print("|");
     Serial1.print(soil_percent); Serial1.print("|");
